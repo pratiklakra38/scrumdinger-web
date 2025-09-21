@@ -174,7 +174,7 @@ export default function Meeting() {
                 <Link to="/">
                   <Button variant="ghost">Exit</Button>
                 </Link>
-                <Button onClick={() => navigate(`/history?scrum=${scrum.id}`)}>Finish</Button>
+                <Button onClick={handleFinish}>Finish</Button>
               </div>
             </div>
 
