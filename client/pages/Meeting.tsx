@@ -115,9 +115,15 @@ export default function Meeting() {
                 <h1 className="text-2xl font-bold">{scrum.name} Meeting</h1>
                 <p className="text-sm text-muted-foreground">{scrum.attendees.length} attendees • {scrum.config.durationMinutes} min • {scrum.config.speakerSeconds}s/speaker</p>
               </div>
-              <div className="text-right">
-                <p className="text-xs text-muted-foreground">Remaining</p>
-                <p className="text-2xl font-extrabold tabular-nums">{Math.floor(timer.remaining/60)}:{String(timer.remaining%60).padStart(2, "0")}</p>
+              <div className="flex items-center gap-8">
+                <div className="text-left">
+                  <p className="text-xs text-muted-foreground">Elapsed</p>
+                  <p className="text-2xl font-extrabold tabular-nums">{Math.floor(timer.elapsed/60)}:{String(timer.elapsed%60).padStart(2, "0")}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground">Remaining</p>
+                  <p className="text-2xl font-extrabold tabular-nums">{Math.floor(timer.remaining/60)}:{String(timer.remaining%60).padStart(2, "0")}</p>
+                </div>
               </div>
             </div>
 
