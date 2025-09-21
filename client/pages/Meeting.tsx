@@ -96,6 +96,14 @@ export default function Meeting() {
 
   const totalMins = Math.ceil(timer.remaining / 60);
 
+  function handleFinish() {
+    if (!scrum || !record) return;
+    const completed: MeetingRecord = { ...record, endedAt: Date.now(), completed: true };
+    const next = { ...scrum, history: [completed, ...scrum.history] } as Scrum;
+    upsertScrum(next);
+    navigate(`/history?scrum=${scrum.id}`);
+  }
+
   return (
     <div className="min-h-screen flex flex-col brand-gradient">
       <Header />
