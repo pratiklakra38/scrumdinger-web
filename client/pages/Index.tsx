@@ -17,7 +17,7 @@ function createNewScrum(): Scrum {
   return {
     id: crypto.randomUUID(),
     name: "New Scrum",
-    attendees: ["Alice", "Bob", "Cathy", "Dan"].map((n) => ({ id: crypto.randomUUID(), name: n, color: randomColor(n) })),
+    attendees: [],
     config: { durationMinutes: 15, speakerSeconds: 60, color: "hsl(var(--primary))", recurring: null },
     history: [],
   };
@@ -90,6 +90,9 @@ export default function Index() {
                   <div className="grid gap-2">
                     <label className="text-sm font-medium">Attendees</label>
                     <div className="space-y-2">
+                      {edit.attendees.length === 0 && (
+                        <div className="text-sm text-muted-foreground">No attendees yet — add attendees using the button below.</div>
+                      )}
                       {edit.attendees.map((a, i) => (
                         <div key={a.id} className="flex items-center gap-2">
                           <span className="inline-block size-6 rounded-full" style={{ backgroundColor: a.color }} />
