@@ -33,4 +33,19 @@ const App = () => (
   </QueryClientProvider>
 );
 
-createRoot(document.getElementById("root")!).render(<App />);
+// Prevent createRoot being called multiple times during HMR or re-execution
+const container = document.getElementById("root");
+if (container) {
+  const anyWin = window as any;
+  if (!anyWin.__react_root) {
+    anyWin.__react_root = createRoot(container);
+  }
+  anyWin.__react_root.render(<App />);
+} else {
+  // Fallback: try to render directly
+  try {
+    createRoot(document.body.appendChild(document.createElement('div'))).render(<App />);
+  } catch (e) {
+    // ignore
+  }
+}
