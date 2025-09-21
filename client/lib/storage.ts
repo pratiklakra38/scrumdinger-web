@@ -25,7 +25,8 @@ export function saveScrums(scrums: Scrum[]) {
 export function upsertScrum(scrum: Scrum) {
   const scrums = loadScrums();
   const idx = scrums.findIndex((s) => s.id === scrum.id);
-  if (idx >= 0) scrums[idx] = scrum; else scrums.unshift(scrum);
+  if (idx >= 0) scrums[idx] = scrum;
+  else scrums.unshift(scrum);
   saveScrums(scrums);
 }
 

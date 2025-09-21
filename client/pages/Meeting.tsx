@@ -69,8 +69,15 @@ export default function Meeting() {
   useEffect(() => {
     if (!scrum || !record) return;
     if (timer.remaining === 0) {
-      const completed: MeetingRecord = { ...record, endedAt: Date.now(), completed: true };
-      const next = { ...scrum, history: [completed, ...scrum.history] } as Scrum;
+      const completed: MeetingRecord = {
+        ...record,
+        endedAt: Date.now(),
+        completed: true,
+      };
+      const next = {
+        ...scrum,
+        history: [completed, ...scrum.history],
+      } as Scrum;
       upsertScrum(next);
       setRecord(completed);
       setRunning(false);
@@ -98,7 +105,11 @@ export default function Meeting() {
 
   function handleFinish() {
     if (!scrum || !record) return;
-    const completed: MeetingRecord = { ...record, endedAt: Date.now(), completed: true };
+    const completed: MeetingRecord = {
+      ...record,
+      endedAt: Date.now(),
+      completed: true,
+    };
     const next = { ...scrum, history: [completed, ...scrum.history] } as Scrum;
     upsertScrum(next);
     navigate(`/history?scrum=${scrum.id}`);
@@ -113,16 +124,26 @@ export default function Meeting() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl font-bold">{scrum.name} Meeting</h1>
-                <p className="text-sm text-muted-foreground">{scrum.attendees.length} attendees • {scrum.config.durationMinutes} min • {scrum.config.speakerSeconds}s/speaker</p>
+                <p className="text-sm text-muted-foreground">
+                  {scrum.attendees.length} attendees •{" "}
+                  {scrum.config.durationMinutes} min •{" "}
+                  {scrum.config.speakerSeconds}s/speaker
+                </p>
               </div>
               <div className="flex items-center gap-8">
                 <div className="text-left">
                   <p className="text-xs text-muted-foreground">Elapsed</p>
-                  <p className="text-2xl font-extrabold tabular-nums">{Math.floor(timer.elapsed/60)}:{String(timer.elapsed%60).padStart(2, "0")}</p>
+                  <p className="text-2xl font-extrabold tabular-nums">
+                    {Math.floor(timer.elapsed / 60)}:
+                    {String(timer.elapsed % 60).padStart(2, "0")}
+                  </p>
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-muted-foreground">Remaining</p>
-                  <p className="text-2xl font-extrabold tabular-nums">{Math.floor(timer.remaining/60)}:{String(timer.remaining%60).padStart(2, "0")}</p>
+                  <p className="text-2xl font-extrabold tabular-nums">
+                    {Math.floor(timer.remaining / 60)}:
+                    {String(timer.remaining % 60).padStart(2, "0")}
+                  </p>
                 </div>
               </div>
             </div>
@@ -131,24 +152,47 @@ export default function Meeting() {
               {/* Timer circle */}
               <div
                 className="relative grid place-items-center rounded-full"
-                style={{ width: 320, height: 320, background: `conic-gradient(hsl(var(--primary)) ${timer.speakerProgress}%, hsl(var(--primary)/0.1) 0)` }}
+                style={{
+                  width: 320,
+                  height: 320,
+                  background: `conic-gradient(hsl(var(--primary)) ${timer.speakerProgress}%, hsl(var(--primary)/0.1) 0)`,
+                }}
               >
                 <div className="absolute inset-4 rounded-full bg-background border" />
                 <div className="relative z-10 text-center">
-                  <p className="text-sm text-muted-foreground">{supported ? (timer.paused ? "Paused" : "Listening…") : "Speech not supported"}</p>
-                  <p className="mt-1 text-3xl font-bold">{activeAttendee?.name ?? "Attendee"}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">{Math.floor(timer.speakerRemaining)}s left</p>
+                  <p className="text-sm text-muted-foreground">
+                    {supported
+                      ? timer.paused
+                        ? "Paused"
+                        : "Listening…"
+                      : "Speech not supported"}
+                  </p>
+                  <p className="mt-1 text-3xl font-bold">
+                    {activeAttendee?.name ?? "Attendee"}
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {Math.floor(timer.speakerRemaining)}s left
+                  </p>
                 </div>
               </div>
 
               <div className="mt-4">
-                <CircularParticipants attendees={scrum.attendees} activeIndex={timer.speakerIndex} />
+                <CircularParticipants
+                  attendees={scrum.attendees}
+                  activeIndex={timer.speakerIndex}
+                />
               </div>
 
               <div className="mt-6 flex gap-2">
-                <Button onClick={() => timer.prevSpeaker()} variant="secondary">Prev</Button>
-                <Button onClick={() => setRunning((r) => !r)}>{timer.paused ? "Resume" : "Pause"}</Button>
-                <Button onClick={() => timer.nextSpeaker()} variant="secondary">Next</Button>
+                <Button onClick={() => timer.prevSpeaker()} variant="secondary">
+                  Prev
+                </Button>
+                <Button onClick={() => setRunning((r) => !r)}>
+                  {timer.paused ? "Resume" : "Pause"}
+                </Button>
+                <Button onClick={() => timer.nextSpeaker()} variant="secondary">
+                  Next
+                </Button>
               </div>
             </div>
           </section>
@@ -160,20 +204,31 @@ export default function Meeting() {
                 <ul className="space-y-2">
                   {record.transcript.map((t) => (
                     <li key={t.id} className="flex gap-2">
-                      <span className="shrink-0 text-muted-foreground tabular-nums">{new Date(t.at).toLocaleTimeString()}</span>
-                      <span className="font-semibold">{scrum.attendees.find((a) => a.id === t.attendeeId)?.name || "System"}:</span>
+                      <span className="shrink-0 text-muted-foreground tabular-nums">
+                        {new Date(t.at).toLocaleTimeString()}
+                      </span>
+                      <span className="font-semibold">
+                        {scrum.attendees.find((a) => a.id === t.attendeeId)
+                          ?.name || "System"}
+                        :
+                      </span>
                       <span className="break-words">{t.text}</span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-muted-foreground">Speak to start building the transcript. Microphone access may be required.</p>
+                <p className="text-muted-foreground">
+                  Speak to start building the transcript. Microphone access may
+                  be required.
+                </p>
               )}
             </div>
 
             <div className="mt-4 flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground">Meeting time remaining</p>
+                <p className="text-xs text-muted-foreground">
+                  Meeting time remaining
+                </p>
                 <Progress value={timer.progress} className="h-2 w-40" />
               </div>
               <div className="flex gap-2">
@@ -184,7 +239,9 @@ export default function Meeting() {
               </div>
             </div>
 
-            <p className="mt-4 text-xs text-muted-foreground">Notifications and scheduling can be enabled in Settings.</p>
+            <p className="mt-4 text-xs text-muted-foreground">
+              Notifications and scheduling can be enabled in Settings.
+            </p>
           </aside>
         </div>
       </main>

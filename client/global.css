@@ -105,7 +105,16 @@
 
 @layer utilities {
   .brand-gradient {
-    background-image: radial-gradient(1200px 600px at 100% -50%, hsl(var(--primary)/0.15) 0%, transparent 60%),
-      radial-gradient(1000px 500px at -20% 120%, hsl(var(--accent)/0.18) 0%, transparent 60%);
+    background-image:
+      radial-gradient(
+        1200px 600px at 100% -50%,
+        hsl(var(--primary) / 0.15) 0%,
+        transparent 60%
+      ),
+      radial-gradient(
+        1000px 500px at -20% 120%,
+        hsl(var(--accent) / 0.18) 0%,
+        transparent 60%
+      );
   }
 }

@@ -14,7 +14,9 @@ export function useSpeechRecognition(start: boolean) {
   const recognitionRef = useRef<any | null>(null);
 
   useEffect(() => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
       setSupported(false);
       return;
@@ -27,7 +29,8 @@ export function useSpeechRecognition(start: boolean) {
 
     rec.onstart = () => setListening(true);
     rec.onend = () => setListening(false);
-    rec.onerror = (e: any) => setError(e?.message || "Speech recognition error");
+    rec.onerror = (e: any) =>
+      setError(e?.message || "Speech recognition error");
     rec.onresult = (ev: any) => {
       let transcript = "";
       let isFinal = false;
@@ -41,7 +44,9 @@ export function useSpeechRecognition(start: boolean) {
     recognitionRef.current = rec;
 
     return () => {
-      try { rec.stop(); } catch {}
+      try {
+        rec.stop();
+      } catch {}
       recognitionRef.current = null;
     };
   }, []);
@@ -50,9 +55,14 @@ export function useSpeechRecognition(start: boolean) {
     const rec = recognitionRef.current;
     if (!rec) return;
     if (start && !listening) {
-      try { setError(null); rec.start(); } catch {}
+      try {
+        setError(null);
+        rec.start();
+      } catch {}
     } else if (!start && listening) {
-      try { rec.stop(); } catch {}
+      try {
+        rec.stop();
+      } catch {}
     }
   }, [start, listening]);
 

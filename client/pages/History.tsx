@@ -69,18 +69,31 @@ export default function History() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Meeting History</h1>
-            <p className="text-muted-foreground">Monthly view of archived meetings and transcripts</p>
+            <p className="text-muted-foreground">
+              Monthly view of archived meetings and transcripts
+            </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" onClick={prevMonth}>Prev</Button>
-            <div className="px-3 py-2 rounded text-sm font-medium">{cursor.toLocaleString(undefined, { month: 'long', year: 'numeric' })}</div>
-            <Button variant="ghost" onClick={nextMonth}>Next</Button>
+            <Button variant="ghost" onClick={prevMonth}>
+              Prev
+            </Button>
+            <div className="px-3 py-2 rounded text-sm font-medium">
+              {cursor.toLocaleString(undefined, {
+                month: "long",
+                year: "numeric",
+              })}
+            </div>
+            <Button variant="ghost" onClick={nextMonth}>
+              Next
+            </Button>
           </div>
         </div>
 
         <div className="mt-6 grid grid-cols-7 gap-2">
-          {['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((d) => (
-            <div key={d} className="text-xs text-muted-foreground text-center">{d}</div>
+          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
+            <div key={d} className="text-xs text-muted-foreground text-center">
+              {d}
+            </div>
           ))}
 
           {days.map((d) => {
@@ -89,16 +102,34 @@ export default function History() {
             const isCurrentMonth = d.getMonth() === cursor.getMonth();
             const isSelected = selected === key;
             return (
-              <button key={key} onClick={() => setSelected(isSelected ? null : key)} className={`p-2 h-14 text-left rounded-lg border text-xs ${isCurrentMonth? 'bg-card': 'bg-background/60 text-muted-foreground'} ${isSelected? 'ring-2 ring-primary': ''}`}>
+              <button
+                key={key}
+                onClick={() => setSelected(isSelected ? null : key)}
+                className={`p-2 h-14 text-left rounded-lg border text-xs ${isCurrentMonth ? "bg-card" : "bg-background/60 text-muted-foreground"} ${isSelected ? "ring-2 ring-primary" : ""}`}
+              >
                 <div className="flex items-start justify-between">
                   <div className="text-sm font-medium">{d.getDate()}</div>
-                  {items.length > 0 && <div className="text-[11px] bg-primary text-primary-foreground rounded px-2 py-0.5">{items.length}</div>}
+                  {items.length > 0 && (
+                    <div className="text-[11px] bg-primary text-primary-foreground rounded px-2 py-0.5">
+                      {items.length}
+                    </div>
+                  )}
                 </div>
                 <div className="mt-1 text-[11px] text-muted-foreground">
-                  {items.slice(0,1).map((it, i) => (
-                    <div key={i} className="truncate">{it.scrum.name} • {new Date(it.record.startedAt).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</div>
+                  {items.slice(0, 1).map((it, i) => (
+                    <div key={i} className="truncate">
+                      {it.scrum.name} •{" "}
+                      {new Date(it.record.startedAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </div>
                   ))}
-                  {items.length > 1 && <div className="text-[11px] text-muted-foreground">+{items.length-1} more</div>}
+                  {items.length > 1 && (
+                    <div className="text-[11px] text-muted-foreground">
+                      +{items.length - 1} more
+                    </div>
+                  )}
                 </div>
               </button>
             );
@@ -109,7 +140,9 @@ export default function History() {
         <div className="mt-6">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Recent Meetings</h2>
-            <div className="text-sm text-muted-foreground">Most recent first</div>
+            <div className="text-sm text-muted-foreground">
+              Most recent first
+            </div>
           </div>
           <div className="mt-3 rounded-xl border bg-card p-4">
             {recent.length ? (
@@ -118,19 +151,37 @@ export default function History() {
                   <li key={idx} className="flex items-center justify-between">
                     <div>
                       <div className="font-medium">{it.scrum.name}</div>
-                      <div className="text-sm text-muted-foreground">{new Date(it.record.startedAt).toLocaleString()} • {it.record.transcript.length} transcript entries</div>
+                      <div className="text-sm text-muted-foreground">
+                        {new Date(it.record.startedAt).toLocaleString()} •{" "}
+                        {it.record.transcript.length} transcript entries
+                      </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="secondary" onClick={() => {
-                        const blob = new Blob([JSON.stringify(it.record, null, 2)], { type: 'application/json' });
-                        const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `${it.scrum.name}-${new Date(it.record.startedAt).toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url);
-                      }}>Export</Button>
+                      <Button
+                        variant="secondary"
+                        onClick={() => {
+                          const blob = new Blob(
+                            [JSON.stringify(it.record, null, 2)],
+                            { type: "application/json" },
+                          );
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement("a");
+                          a.href = url;
+                          a.download = `${it.scrum.name}-${new Date(it.record.startedAt).toISOString().slice(0, 10)}.json`;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                        }}
+                      >
+                        Export
+                      </Button>
                     </div>
                   </li>
                 ))}
               </ul>
             ) : (
-              <div className="text-sm text-muted-foreground">No recent meetings.</div>
+              <div className="text-sm text-muted-foreground">
+                No recent meetings.
+              </div>
             )}
           </div>
         </div>
@@ -144,21 +195,43 @@ export default function History() {
                   <li key={idx} className="flex items-center justify-between">
                     <div>
                       <div className="font-medium">{it.scrum.name}</div>
-                      <div className="text-sm text-muted-foreground">{new Date(it.record.startedAt).toLocaleString()} • {it.record.transcript.length} transcript entries</div>
+                      <div className="text-sm text-muted-foreground">
+                        {new Date(it.record.startedAt).toLocaleString()} •{" "}
+                        {it.record.transcript.length} transcript entries
+                      </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="secondary" onClick={() => {
-                        const blob = new Blob([JSON.stringify(it.record, null, 2)], { type: 'application/json' });
-                        const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `${it.scrum.name}-${selected}.json`; a.click(); URL.revokeObjectURL(url);
-                      }}>Export</Button>
+                      <Button
+                        variant="secondary"
+                        onClick={() => {
+                          const blob = new Blob(
+                            [JSON.stringify(it.record, null, 2)],
+                            { type: "application/json" },
+                          );
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement("a");
+                          a.href = url;
+                          a.download = `${it.scrum.name}-${selected}.json`;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                        }}
+                      >
+                        Export
+                      </Button>
                     </div>
                   </li>
                 ))}
-                {(map[selected] || []).length === 0 && <li className="text-sm text-muted-foreground">No meetings on this day.</li>}
+                {(map[selected] || []).length === 0 && (
+                  <li className="text-sm text-muted-foreground">
+                    No meetings on this day.
+                  </li>
+                )}
               </ul>
             </div>
           ) : (
-            <div className="rounded-xl border bg-card p-6 text-muted-foreground">Select a day to view meetings and transcripts.</div>
+            <div className="rounded-xl border bg-card p-6 text-muted-foreground">
+              Select a day to view meetings and transcripts.
+            </div>
           )}
         </div>
 

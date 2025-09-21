@@ -8,7 +8,8 @@ export interface TimerConfig {
 
 function beep(duration = 180, frequency = 740) {
   try {
-    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const audioCtx = new (window.AudioContext ||
+      (window as any).webkitAudioContext)();
     const oscillator = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
     oscillator.type = "sine";
@@ -16,7 +17,10 @@ function beep(duration = 180, frequency = 740) {
     oscillator.connect(gainNode);
     gainNode.connect(audioCtx.destination);
     oscillator.start();
-    gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration / 1000);
+    gainNode.gain.exponentialRampToValueAtTime(
+      0.00001,
+      audioCtx.currentTime + duration / 1000,
+    );
     setTimeout(() => {
       oscillator.stop();
       audioCtx.close();
@@ -81,7 +85,10 @@ export function useMeetingTimer(config: TimerConfig, running: boolean) {
   }, []);
 
   const progress = useMemo(() => (elapsed / total) * 100, [elapsed, total]);
-  const speakerProgress = useMemo(() => (speakerElapsed / per) * 100, [speakerElapsed, per]);
+  const speakerProgress = useMemo(
+    () => (speakerElapsed / per) * 100,
+    [speakerElapsed, per],
+  );
 
   return {
     elapsed,

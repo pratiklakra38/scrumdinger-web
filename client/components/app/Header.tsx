@@ -19,7 +19,10 @@ export default function Header() {
         <nav className="flex items-center gap-1">
           {links.map((l) => (
             <Link key={l.to} to={l.to}>
-              <Button variant={pathname === l.to ? "default" : "ghost"} size="sm">
+              <Button
+                variant={pathname === l.to ? "default" : "ghost"}
+                size="sm"
+              >
                 {l.label}
               </Button>
             </Link>

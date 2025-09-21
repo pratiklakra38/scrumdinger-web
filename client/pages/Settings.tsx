@@ -4,7 +4,9 @@ import { Button } from "../components/ui/button";
 import { Switch } from "../components/ui/switch";
 
 export default function Settings() {
-  const [notifications, setNotifications] = useState(Notification.permission === "granted");
+  const [notifications, setNotifications] = useState(
+    Notification.permission === "granted",
+  );
 
   async function requestNotifications() {
     try {
@@ -22,16 +24,28 @@ export default function Settings() {
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium">Meeting reminders</p>
-              <p className="text-sm text-muted-foreground">Enable browser notifications for scheduled scrums.</p>
+              <p className="text-sm text-muted-foreground">
+                Enable browser notifications for scheduled scrums.
+              </p>
             </div>
             <div className="flex items-center gap-3">
-              <Switch checked={notifications} onCheckedChange={(v) => (v ? requestNotifications() : setNotifications(false))} />
-              <Button variant="secondary" onClick={requestNotifications}>Grant Permission</Button>
+              <Switch
+                checked={notifications}
+                onCheckedChange={(v) =>
+                  v ? requestNotifications() : setNotifications(false)
+                }
+              />
+              <Button variant="secondary" onClick={requestNotifications}>
+                Grant Permission
+              </Button>
             </div>
           </div>
 
           <div>
-            <p className="text-sm text-muted-foreground">For offline support and background notifications, add the app to your home screen or install as a PWA from the browser menu.</p>
+            <p className="text-sm text-muted-foreground">
+              For offline support and background notifications, add the app to
+              your home screen or install as a PWA from the browser menu.
+            </p>
           </div>
         </div>
       </main>
