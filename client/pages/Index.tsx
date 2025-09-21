@@ -117,17 +117,26 @@ export default function Index() {
                   </div>
 
                   <div className="grid gap-2">
-                    <label className="text-sm font-medium">Meeting Duration (minutes)</label>
+                    <label className="text-sm font-medium">
+                      Meeting Duration (minutes)
+                    </label>
                     <NumberControl
                       value={edit.config.durationMinutes}
                       min={1}
                       step={1}
-                      onChange={(v) => setEdit({ ...edit, config: { ...edit.config, durationMinutes: v } })}
+                      onChange={(v) =>
+                        setEdit({
+                          ...edit,
+                          config: { ...edit.config, durationMinutes: v },
+                        })
+                      }
                     />
                   </div>
 
                   <div className="grid gap-2">
-                    <label className="text-sm font-medium">Speaker Time Limit</label>
+                    <label className="text-sm font-medium">
+                      Speaker Time Limit
+                    </label>
                     <div className="flex items-center gap-4">
                       <NumberControl
                         label="minutes"
@@ -136,7 +145,13 @@ export default function Index() {
                         step={1}
                         onChange={(mins) => {
                           const secs = edit.config.speakerSeconds % 60;
-                          setEdit({ ...edit, config: { ...edit.config, speakerSeconds: mins * 60 + secs } });
+                          setEdit({
+                            ...edit,
+                            config: {
+                              ...edit.config,
+                              speakerSeconds: mins * 60 + secs,
+                            },
+                          });
                         }}
                       />
                       <NumberControl
@@ -146,17 +161,28 @@ export default function Index() {
                         max={59}
                         step={5}
                         onChange={(sec) => {
-                          let mins = Math.floor(edit.config.speakerSeconds / 60);
+                          let mins = Math.floor(
+                            edit.config.speakerSeconds / 60,
+                          );
                           // if we try to set seconds beyond 59, roll into minutes
                           if (sec > 59) {
                             mins += Math.floor(sec / 60);
                             sec = sec % 60;
                           }
-                          setEdit({ ...edit, config: { ...edit.config, speakerSeconds: mins * 60 + sec } });
+                          setEdit({
+                            ...edit,
+                            config: {
+                              ...edit.config,
+                              speakerSeconds: mins * 60 + sec,
+                            },
+                          });
                         }}
                       />
                     </div>
-                    <div className="text-xs text-muted-foreground">Seconds control rolls into minutes when exceeding 59s. Max per-second display is 59s.</div>
+                    <div className="text-xs text-muted-foreground">
+                      Seconds control rolls into minutes when exceeding 59s. Max
+                      per-second display is 59s.
+                    </div>
                   </div>
 
                   <div className="grid gap-2">
@@ -170,7 +196,10 @@ export default function Index() {
                       )}
                       {edit.attendees.map((a, i) => (
                         <div key={a.id} className="flex items-center gap-2">
-                          <span className="inline-block size-6 rounded-full" style={{ backgroundColor: a.color }} />
+                          <span
+                            className="inline-block size-6 rounded-full"
+                            style={{ backgroundColor: a.color }}
+                          />
                           <Input
                             placeholder={`Member ${i + 1}`}
                             value={a.name}
@@ -182,7 +211,9 @@ export default function Index() {
                           />
                           <Input
                             type="color"
-                            value={a.color.startsWith("hsl") ? "#000000" : a.color}
+                            value={
+                              a.color.startsWith("hsl") ? "#000000" : a.color
+                            }
                             onChange={(e) => {
                               const next = [...edit.attendees];
                               next[i] = { ...a, color: e.target.value };
@@ -190,7 +221,10 @@ export default function Index() {
                             }}
                             className="w-12 p-1"
                           />
-                          <Button variant="ghost" onClick={() => removeAttendee(a.id)}>
+                          <Button
+                            variant="ghost"
+                            onClick={() => removeAttendee(a.id)}
+                          >
                             Remove
                           </Button>
                         </div>

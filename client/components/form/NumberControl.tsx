@@ -9,7 +9,14 @@ interface Props {
   label?: string;
 }
 
-export default function NumberControl({ value, min = 0, max = 9999, step = 1, onChange, label }: Props) {
+export default function NumberControl({
+  value,
+  min = 0,
+  max = 9999,
+  step = 1,
+  onChange,
+  label,
+}: Props) {
   return (
     <div className="inline-flex items-center gap-2">
       {label && <div className="text-sm w-28">{label}</div>}

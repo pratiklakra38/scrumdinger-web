@@ -22,15 +22,15 @@ const App = () => (
       <Sonner />
       <AuthProvider>
         <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/meeting/:id" element={<Meeting />} />
-          <Route path="/history" element={<History />} />
-          <Route path="/settings" element={<Settings />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/meeting/:id" element={<Meeting />} />
+            <Route path="/history" element={<History />} />
+            <Route path="/settings" element={<Settings />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
@@ -47,7 +47,9 @@ if (container) {
 } else {
   // Fallback: try to render directly
   try {
-    createRoot(document.body.appendChild(document.createElement('div'))).render(<App />);
+    createRoot(document.body.appendChild(document.createElement("div"))).render(
+      <App />,
+    );
   } catch (e) {
     // ignore
   }
