@@ -11,6 +11,7 @@ import NotFound from "./pages/NotFound";
 import Meeting from "./pages/Meeting";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
+import { AuthProvider } from "./components/auth/AuthProvider";
 
 const queryClient = new QueryClient();
 
