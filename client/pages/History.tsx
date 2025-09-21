@@ -32,6 +32,17 @@ export default function History() {
     return m;
   }, [scrums]);
 
+  const recent = useMemo(() => {
+    const all: any[] = [];
+    for (const s of scrums) {
+      for (const h of s.history) {
+        all.push({ scrum: s, record: h });
+      }
+    }
+    all.sort((a, b) => b.record.startedAt - a.record.startedAt);
+    return all.slice(0, 6);
+  }, [scrums]);
+
   const first = startOfMonth(cursor);
   const last = endOfMonth(cursor);
   const startDay = new Date(first);
@@ -78,20 +89,50 @@ export default function History() {
             const isCurrentMonth = d.getMonth() === cursor.getMonth();
             const isSelected = selected === key;
             return (
-              <button key={key} onClick={() => setSelected(isSelected ? null : key)} className={`p-3 h-20 text-left rounded-lg border ${isCurrentMonth? 'bg-card': 'bg-background/60 text-muted-foreground'} ${isSelected? 'ring-2 ring-primary': ''}`}>
+              <button key={key} onClick={() => setSelected(isSelected ? null : key)} className={`p-2 h-14 text-left rounded-lg border text-xs ${isCurrentMonth? 'bg-card': 'bg-background/60 text-muted-foreground'} ${isSelected? 'ring-2 ring-primary': ''}`}>
                 <div className="flex items-start justify-between">
                   <div className="text-sm font-medium">{d.getDate()}</div>
-                  {items.length > 0 && <div className="text-xs bg-primary text-primary-foreground rounded px-2 py-0.5">{items.length}</div>}
+                  {items.length > 0 && <div className="text-[11px] bg-primary text-primary-foreground rounded px-2 py-0.5">{items.length}</div>}
                 </div>
-                <div className="mt-2 text-xs text-muted-foreground">
-                  {items.slice(0,2).map((it, i) => (
-                    <div key={i} className="truncate">{it.scrum.name} • {new Date(it.record.startedAt).toLocaleTimeString()}</div>
+                <div className="mt-1 text-[11px] text-muted-foreground">
+                  {items.slice(0,1).map((it, i) => (
+                    <div key={i} className="truncate">{it.scrum.name} • {new Date(it.record.startedAt).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</div>
                   ))}
-                  {items.length > 2 && <div className="text-[11px] text-muted-foreground">+{items.length-2} more</div>}
+                  {items.length > 1 && <div className="text-[11px] text-muted-foreground">+{items.length-1} more</div>}
                 </div>
               </button>
             );
           })}
+        </div>
+
+        {/* Recent meetings always shown below calendar */}
+        <div className="mt-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Recent Meetings</h2>
+            <div className="text-sm text-muted-foreground">Most recent first</div>
+          </div>
+          <div className="mt-3 rounded-xl border bg-card p-4">
+            {recent.length ? (
+              <ul className="space-y-2">
+                {recent.map((it, idx) => (
+                  <li key={idx} className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium">{it.scrum.name}</div>
+                      <div className="text-sm text-muted-foreground">{new Date(it.record.startedAt).toLocaleString()} • {it.record.transcript.length} transcript entries</div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="secondary" onClick={() => {
+                        const blob = new Blob([JSON.stringify(it.record, null, 2)], { type: 'application/json' });
+                        const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `${it.scrum.name}-${new Date(it.record.startedAt).toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url);
+                      }}>Export</Button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="text-sm text-muted-foreground">No recent meetings.</div>
+            )}
+          </div>
         </div>
 
         <div className="mt-6">
