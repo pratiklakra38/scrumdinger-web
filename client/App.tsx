@@ -19,6 +19,8 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      {/* auth */}
+      <import-none />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
