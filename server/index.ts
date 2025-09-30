@@ -1,10 +1,11 @@
-import "dotenv/config";
+import * as dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
 import { handleGetScrums, handlePostScrum } from "./routes/scrums.ts"; 
-import { handleGetUsers, handlePostUser } from "./routes/users.ts"; 
-// Assuming handleDemo is defined and imported elsewhere, as per previous discussion
-// import { handleDemo } from "./routes/demo.ts"; 
+import { handleSignUp, handleSignIn, handleLoginOrRegister } from "./routes/auth.ts"; 
+
+dotenv.config({ path: '.env.secret' });
+dotenv.config({ path: '.env.public', override: false }); 
 
 
 export function createServer() {
@@ -16,9 +17,9 @@ export function createServer() {
 
     app.get("/api/scrums", handleGetScrums);
     app.post("/api/scrums", handlePostScrum);
-    app.get("/api/users", handleGetUsers);
-    app.post("/api/users", handlePostUser);
-
+    app.post("/api/auth/signup", handleSignUp);
+    app.post("/api/auth/signin", handleSignIn);
+    app.post("/api/auth/login-or-register", handleLoginOrRegister);
 
     return app;
 }
