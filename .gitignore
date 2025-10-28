@@ -24,7 +24,7 @@ dist-ssr
 *.sw?
 
 .config/
-!.env.public
 .env.secret
 .env
 package-lock.json
+.env.public

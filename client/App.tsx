@@ -1,3 +1,4 @@
+
 import "./global.css";
 
 import { Toaster } from "@/components/ui/toaster";
@@ -12,6 +13,7 @@ import Meeting from "./pages/Meeting";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
 import { AuthProvider } from "./components/auth/AuthProvider";
+import Login from "./pages/Login";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +29,7 @@ const App = () => (
             <Route path="/meeting/:id" element={<Meeting />} />
             <Route path="/history" element={<History />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/login" element={<Login />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
