@@ -1,9 +1,16 @@
 
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
   const { user, signInWithGoogle, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) navigate("/index");
+  }, [user, navigate]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
