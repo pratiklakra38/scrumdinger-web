@@ -1,249 +1,188 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import type { Scrum, MeetingRecord, TranscriptEntry } from "../../shared/api";
-import { findScrum, upsertScrum } from "../lib/storage";
-import { Button } from "../components/ui/button";
-import { Progress } from "../components/ui/progress";
-import CircularParticipants from "../components/meeting/CircularParticipants";
-import Header from "../components/app/Header";
-import { useMeetingTimer } from "../hooks/useMeetingTimer";
+import { useEffect, useRef, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useRealtimeMeeting } from "../hooks/useRealtimeMeeting";
 import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
 
+function debounce<F extends (...args: any[]) => void>(fn: F, ms: number) {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  return (...args: Parameters<F>) => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), ms);
+  };
+}
+
 export default function Meeting() {
-  const params = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
-  const scrum = findScrum(params.id || "");
+  const userName = localStorage.getItem("userName") || "Guest";
+  // Local state for in-progress status, driven by timerState or socket
+  const [isMeetingStarted, setMeetingStarted] = useState(false);
 
-  const [running, setRunning] = useState(true);
-  const order = useMemo(() => scrum?.attendees.map((a) => a.id) ?? [], [scrum]);
-  const timer = useMeetingTimer(
-    {
-      meetingSeconds: (scrum?.config.durationMinutes || 15) * 60,
-      perSpeakerSeconds: scrum?.config.speakerSeconds || 60,
-      speakersCount: order.length || 1,
-    },
-    running,
-  );
+  const {
+    participants,
+    currentSpeakerIndex,
+    transcript,
+    timerState,
+    isConnected,
+    nextSpeaker,
+    sendTranscript,
+    syncTimer,
+    startMeeting,
+    endMeeting,
+    socket
+  } = useRealtimeMeeting(id!, userName);
 
-  const activeAttendee = useMemo(
-    () => (scrum ? scrum.attendees[timer.speakerIndex] : undefined),
-    [scrum, timer.speakerIndex],
-  );
-
-  const [record, setRecord] = useState<MeetingRecord | null>(() =>
-    scrum
-      ? {
-          id: crypto.randomUUID(),
-          scrumId: scrum.id,
-          startedAt: Date.now(),
-          endedAt: null,
-          order,
-          transcript: [],
-          completed: false,
-        }
-      : null,
-  );
-
-  const { supported, result, reset } = useSpeechRecognition(running);
-  const lastSpeakerIdRef = useRef<string | null>(null);
+  // Debounced transcript sending (1.2s before sending new chunk)
+  const { supported, result, reset } = useSpeechRecognition(timerState.isRunning);
+  const lastSentRef = useRef<string>("");
+  const debouncedSend = useRef(
+    debounce((text: string, speaker: string) => sendTranscript(text, speaker), 1200)
+  ).current;
 
   useEffect(() => {
-    if (!scrum || !record) return;
-    if (!result) return;
-
-    const attendeeId = activeAttendee?.id ?? null;
-    // Avoid spamming interim empty results
-    if (!result.text) return;
-
-    const entry: TranscriptEntry = {
-      id: crypto.randomUUID(),
-      attendeeId,
-      text: result.text,
-      at: Date.now(),
-    };
-    setRecord((r) => (r ? { ...r, transcript: [...r.transcript, entry] } : r));
-    if (result.isFinal) reset();
-    lastSpeakerIdRef.current = attendeeId;
-  }, [result, activeAttendee, scrum, record, reset]);
-
-  useEffect(() => {
-    if (!scrum || !record) return;
-    if (timer.remaining === 0) {
-      const completed: MeetingRecord = {
-        ...record,
-        endedAt: Date.now(),
-        completed: true,
-      };
-      const next = {
-        ...scrum,
-        history: [completed, ...scrum.history],
-      } as Scrum;
-      upsertScrum(next);
-      setRecord(completed);
-      setRunning(false);
-      navigate(`/history?scrum=${scrum.id}`);
+    if (result && result.text && result.text !== lastSentRef.current) {
+      debouncedSend(result.text, userName);
+      lastSentRef.current = result.text;
+      if (result.isFinal) reset();
     }
-  }, [timer.remaining, scrum, record, navigate]);
+  }, [result, userName, debouncedSend, reset]);
 
-  if (!scrum) {
+  // Listen for start/end to transition state based on real-time events
+  useEffect(() => {
+    if (!socket) return;
+    const handleStarted = () => setMeetingStarted(true);
+    const handleEnded = () => setMeetingStarted(false);
+    socket.on('meeting-started', handleStarted);
+    socket.on('meeting-ended', handleEnded);
+    // Whenever timerState.isRunning changes (via meeting-state), also update
+    setMeetingStarted(timerState.isRunning);
+    return () => {
+      socket.off('meeting-started', handleStarted);
+      socket.off('meeting-ended', handleEnded);
+    };
+  }, [socket, timerState.isRunning]);
+
+  if (!id) {
+    return <div className="p-8 text-lg text-gray-500">No meeting code given.</div>;
+  }
+  if (!isConnected) {
+    return <div className="p-8 text-lg text-orange-600">Connecting to meeting room…<br/>If this doesn't update, ensure the server is running and accessible.</div>;
+  }
+
+  // LOBBY: Only show lobby until Start
+  if (!isMeetingStarted) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-1 flex items-center justify-center p-6">
-          <div className="text-center">
-            <p className="mb-4">Scrum not found.</p>
-            <Link to="/">
-              <Button>Back to Scrums</Button>
-            </Link>
+      <div className="min-h-screen flex flex-col brand-gradient">
+        <header className="bg-white shadow px-8 py-4 flex flex-col md:flex-row md:items-center md:justify-between">
+          <div className="font-bold text-lg">Meeting ID: <span className="font-mono bg-gray-100 px-2 py-1 rounded">{id}</span></div>
+          <div className="text-gray-600">Share this code with others to let them join your meeting.</div>
+          <div className="flex items-center gap-2">
+            <span className={`w-3 h-3 rounded-full ${isConnected ? "bg-green-500" : "bg-red-500"}`} />
+            <span className="text-sm">{isConnected ? "Connected" : "Disconnected"}</span>
+            <button className="ml-4 px-3 py-2 bg-red-600 text-white rounded" onClick={() => { endMeeting(); navigate("/scrums"); }}>Exit</button>
+          </div>
+        </header>
+        <main className="flex-1 flex flex-col items-center justify-center bg-white">
+          <div className="bg-white rounded-lg shadow p-8 min-w-[340px] max-w-md w-full">
+            <h2 className="text-2xl font-semibold mb-3">Waiting Room</h2>
+            <div className="mb-4 text-gray-600">Participants joined:</div>
+            <div className="mb-6">
+              {participants.length === 0 && <div className="text-gray-400">No one has joined yet. Copy the code above and share!</div>}
+              {participants.map(p => (
+                <div key={p.id} className="px-4 py-2 mb-2 rounded bg-blue-50 border flex items-center">
+                  <span className="mr-2 font-bold text-blue-700">{p.name}</span>
+                  {p.name === userName && <span className="text-xs text-gray-400">(You)</span>}
+                </div>
+              ))}
+            </div>
+            {participants.length > 0 && (
+              <button
+                className="w-full bg-green-600 text-white py-2 rounded-lg text-lg hover:bg-green-700"
+                onClick={startMeeting}
+              >
+                Start Meeting
+              </button>
+            )}
+            <div className="mt-4 text-xs text-gray-500">
+              Others joining with this code will appear above. <br />
+              Only click Start when everyone is ready!
+            </div>
           </div>
         </main>
       </div>
     );
   }
 
-  const totalMins = Math.ceil(timer.remaining / 60);
-
-  function handleFinish() {
-    if (!scrum || !record) return;
-    const completed: MeetingRecord = {
-      ...record,
-      endedAt: Date.now(),
-      completed: true,
-    };
-    const next = { ...scrum, history: [completed, ...scrum.history] } as Scrum;
-    upsertScrum(next);
-    navigate(`/history?scrum=${scrum.id}`);
-  }
-
+  // MEETING IN PROGRESS
   return (
     <div className="min-h-screen flex flex-col brand-gradient">
-      <Header />
-      <main className="flex-1">
-        <div className="mx-auto max-w-6xl px-4 py-8 grid gap-6 md:grid-cols-[1fr_380px]">
-          <section className="bg-card rounded-xl p-6 shadow-sm border">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold">{scrum.name} Meeting</h1>
-                <p className="text-sm text-muted-foreground">
-                  {scrum.attendees.length} attendees •{" "}
-                  {scrum.config.durationMinutes} min •{" "}
-                  {scrum.config.speakerSeconds}s/speaker
-                </p>
-              </div>
-              <div className="flex items-center gap-8">
-                <div className="text-left">
-                  <p className="text-xs text-muted-foreground">Elapsed</p>
-                  <p className="text-2xl font-extrabold tabular-nums">
-                    {Math.floor(timer.elapsed / 60)}:
-                    {String(timer.elapsed % 60).padStart(2, "0")}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-muted-foreground">Remaining</p>
-                  <p className="text-2xl font-extrabold tabular-nums">
-                    {Math.floor(timer.remaining / 60)}:
-                    {String(timer.remaining % 60).padStart(2, "0")}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-6 flex flex-col items-center">
-              {/* Timer circle */}
-              <div
-                className="relative grid place-items-center rounded-full"
-                style={{
-                  width: 320,
-                  height: 320,
-                  background: `conic-gradient(hsl(var(--primary)) ${timer.speakerProgress}%, hsl(var(--primary)/0.1) 0)`,
-                }}
-              >
-                <div className="absolute inset-4 rounded-full bg-background border" />
-                <div className="relative z-10 text-center">
-                  <p className="text-sm text-muted-foreground">
-                    {supported
-                      ? timer.paused
-                        ? "Paused"
-                        : "Listening…"
-                      : "Speech not supported"}
-                  </p>
-                  <p className="mt-1 text-3xl font-bold">
-                    {activeAttendee?.name ?? "Attendee"}
-                  </p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {Math.floor(timer.speakerRemaining)}s left
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-4">
-                <CircularParticipants
-                  attendees={scrum.attendees}
-                  activeIndex={timer.speakerIndex}
-                />
-              </div>
-
-              <div className="mt-6 flex gap-2">
-                <Button onClick={() => timer.prevSpeaker()} variant="secondary">
-                  Prev
-                </Button>
-                <Button onClick={() => setRunning((r) => !r)}>
-                  {timer.paused ? "Resume" : "Pause"}
-                </Button>
-                <Button onClick={() => timer.nextSpeaker()} variant="secondary">
-                  Next
-                </Button>
-              </div>
-            </div>
-          </section>
-
-          <aside className="bg-card rounded-xl p-6 shadow-sm border">
-            <h2 className="font-semibold">Live Transcript</h2>
-            <div className="mt-3 h-[420px] overflow-auto rounded-md border bg-background p-3 text-sm">
-              {record?.transcript.length ? (
-                <ul className="space-y-2">
-                  {record.transcript.map((t) => (
-                    <li key={t.id} className="flex gap-2">
-                      <span className="shrink-0 text-muted-foreground tabular-nums">
-                        {new Date(t.at).toLocaleTimeString()}
-                      </span>
-                      <span className="font-semibold">
-                        {scrum.attendees.find((a) => a.id === t.attendeeId)
-                          ?.name || "System"}
-                        :
-                      </span>
-                      <span className="break-words">{t.text}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-muted-foreground">
-                  Speak to start building the transcript. Microphone access may
-                  be required.
-                </p>
-              )}
-            </div>
-
-            <div className="mt-4 flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">
-                  Meeting time remaining
-                </p>
-                <Progress value={timer.progress} className="h-2 w-40" />
-              </div>
-              <div className="flex gap-2">
-                <Link to="/">
-                  <Button variant="ghost">Exit</Button>
-                </Link>
-                <Button onClick={handleFinish}>Finish</Button>
-              </div>
-            </div>
-
-            <p className="mt-4 text-xs text-muted-foreground">
-              Notifications and scheduling can be enabled in Settings.
-            </p>
-          </aside>
+      <header className="bg-white shadow px-8 py-4 flex flex-col md:flex-row md:items-center md:justify-between">
+        <div className="font-bold text-lg">Meeting ID: <span className="font-mono bg-gray-100 px-2 py-1 rounded">{id}</span></div>
+        <div className="text-gray-600">Connected • Meeting in Progress</div>
+        <div className="flex items-center gap-2">
+          <span className={`w-3 h-3 rounded-full ${isConnected ? "bg-green-500" : "bg-red-500"}`} />
+          <span className="text-sm">Connected</span>
+          <button className="ml-4 px-3 py-2 bg-red-600 text-white rounded" onClick={() => { endMeeting(); navigate("/scrums"); }}>Exit</button>
         </div>
+      </header>
+      <main className="flex-1 grid grid-cols-1 md:grid-cols-[2fr_300px_400px]">
+        <section className="flex flex-col items-center justify-center p-8">
+          <h2 className="text-xl font-semibold mb-3">Real-Time Scrum Meeting</h2>
+          <div className="mb-6 text-gray-500">Current Speaker: <span className="font-bold text-blue-700">{participants[currentSpeakerIndex]?.name || "—"}</span></div>
+          <div className="flex gap-4 mb-8">
+            <div>
+              <div className="font-mono">Elapsed</div>
+              <div className="text-2xl font-bold">
+                {Math.floor(timerState.elapsed / 60)}:{(timerState.elapsed % 60).toString().padStart(2, "0")}
+              </div>
+            </div>
+            <div>
+              <div className="font-mono">Remaining</div>
+              <div className="text-2xl font-bold">
+                {Math.floor(timerState.remaining / 60)}:{(timerState.remaining % 60).toString().padStart(2, "0")}
+              </div>
+            </div>
+          </div>
+          <progress value={timerState.elapsed} max={timerState.elapsed + timerState.remaining || 900} className="w-64 h-6 rounded" />
+          <div className="mt-6 flex gap-4">
+            {timerState.isRunning && (
+              <>
+                <button onClick={nextSpeaker} className="bg-blue-600 text-white py-2 px-4 rounded">Next Speaker</button>
+                <button onClick={endMeeting} className="bg-gray-700 text-white py-2 px-4 rounded">End Meeting</button>
+              </>
+            )}
+          </div>
+          <div className="mt-8 text-xs text-gray-500">
+            {supported
+              ? timerState.isRunning
+                ? "Listening for live speech (mic required)..."
+                : "Start the meeting to enable live transcription."
+              : "Speech recognition not supported in this browser."}
+          </div>
+        </section>
+        {/* Participants sidebar */}
+        <aside className="border-l border-gray-200 p-6 bg-white">
+          <h3 className="font-semibold mb-2">Participants ({participants.length})</h3>
+          <div className="space-y-3">
+            {participants.map((p, idx) => (
+              <div key={p.id} className={`p-2 rounded ${idx === currentSpeakerIndex ? "bg-blue-100 border-blue-600 border-2" : "bg-gray-50"}`}>  <span className="inline-block font-bold mr-2">{p.name}</span>
+                {idx === currentSpeakerIndex && <span className="inline text-xs text-blue-700">Speaking now</span>}
+              </div>
+            ))}
+          </div>
+        </aside>
+        {/* Live transcript */}
+        <aside className="border-l border-gray-200 p-6 bg-blue-50 overflow-auto">
+          <h3 className="font-semibold mb-2">Live Transcript</h3>
+          <div className="space-y-2">
+            {transcript.length === 0 && <div className="text-gray-400">Speak to start transcript…</div>}
+            {transcript.map((entry, i) => (
+              <div key={i} className="text-sm">
+                <span className="font-medium text-blue-600">{entry.speaker}:</span> {entry.text} <span className="text-xs text-gray-400">{new Date(entry.timestamp).toLocaleTimeString()}</span>
+              </div>
+            ))}
+          </div>
+        </aside>
       </main>
     </div>
   );

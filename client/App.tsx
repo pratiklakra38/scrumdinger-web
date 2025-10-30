@@ -15,6 +15,8 @@ import History from "./pages/History";
 import Settings from "./pages/Settings";
 import { AuthProvider } from "./components/auth/AuthProvider";
 import Login from "./pages/Login";
+import JoinMeeting from "./pages/JoinMeeting";
+import MeetingPage from "./pages/Meeting";
 
 const queryClient = new QueryClient();
 
@@ -42,10 +44,18 @@ const App = () => (
               }
             />
             <Route
+              path="/join"
+              element={
+                <RequireAuth>
+                  <JoinMeeting />
+                </RequireAuth>
+              }
+            />
+            <Route
               path="/meeting/:id"
               element={
                 <RequireAuth>
-                  <Meeting />
+                  <MeetingPage />
                 </RequireAuth>
               }
             />

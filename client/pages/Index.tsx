@@ -44,6 +44,7 @@ export default function Index() {
   const [scrums, setScrums] = useState<Scrum[]>(loadScrums());
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState<Scrum | null>(null);
+  const [meetingId, setMeetingId] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -331,6 +332,21 @@ export default function Index() {
             </div>
           )}
         </section>
+        <div className="mt-6">
+          <input
+            type="text"
+            value={meetingId}
+            onChange={e => setMeetingId(e.target.value.toUpperCase())}
+            placeholder="Enter Meeting Code (e.g. ABC123)"
+            className="border px-4 py-2 rounded-lg mr-2"
+          />
+          <button
+            onClick={() => meetingId && navigate(`/meeting/${meetingId}`)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+          >
+            Join Meeting
+          </button>
+        </div>
       </main>
     </div>
   );

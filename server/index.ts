@@ -3,6 +3,9 @@ import express from "express";
 import cors from "cors";
 import { handleGetScrums, handlePostScrum } from "./routes/scrums.ts"; 
 import { handleSignUp, handleSignIn, handleLoginOrRegister } from "./routes/auth.ts"; 
+import { createServer as createHttpServer } from "http";
+import { setupWebSocket } from "./websocket";
+
 
 dotenv.config({ path: '.env.secret' });
 dotenv.config({ path: '.env.public', override: false }); 
@@ -23,3 +26,10 @@ export function createServer() {
 
     return app;
 }
+
+const app = createServer();
+const httpServer = createHttpServer(app);
+setupWebSocket(httpServer);
+httpServer.listen(8081, () => {
+  console.log("Server running on port 8081");
+});
